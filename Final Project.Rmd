@@ -35,6 +35,7 @@ library(ggmap)
 library(devtools)
 library(plotly)
 library(countrycode)
+library(leaflet)
 
 
 
@@ -59,9 +60,9 @@ clean_data <-
   select(-contains("source"), -low, -high, -contains("gwno")) %>% 
   rename(total_deaths = best) %>% 
   mutate(type_of_violence = case_when(
-        type_of_violence == "1" ~ "State-Based Conflict",
-        type_of_violence == "2" ~ "Non-State Conflict",
-        type_of_violence == "3" ~ "One-Sided Violence")) 
+        type_of_violence == "1" ~ "state-based conflict",
+        type_of_violence == "2" ~ "non-state conflict",
+        type_of_violence == "3" ~ "one-sided violence")) 
   
 
 ```
@@ -119,12 +120,39 @@ total_deaths_over_time %>%
       scale_color_manual("Type of Violence", values = c("State-Based Conflict" = "orange", 
                                                      "Non-State Conflict" = "darkred", 
                                                      "One-Sided Violence" = "lightpink"))
+
 ```
 
-clean_data %>% 
-  ggplot(mapping = aes(x = longitude, y = latitude, group = region, fill = country)) +
-  geom_polygon(fill = "white", colour = "black")
 
+```{r}
+
+map_data <-
+  clean_data %>% 
+  distinct(conflict_id, .keep_all = TRUE)
+
+red_icon <- makeIcon(
+  iconUrl = "http://icons.iconarchive.com/icons/paomedia/small-n-flat/24/map-marker-icon.png",
+  iconWidth = 24, iconHeight = 26,
+  iconAnchorX = 22, iconAnchorY = 94,
+  shadowUrl = "http://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  shadowWidth = 50, shadowHeight = 64,
+  shadowAnchorX = 4, shadowAnchorY = 62)
+
+leaflet(options = leafletOptions(minZoom = 1)) %>% 
+  addProviderTiles("CartoDB.DarkMatter") %>% 
+  setMaxBounds(lng1 = 180 , lat1 = 90, lng2 = -180, lat2 = -90) %>% 
+  addMarkers(lng = map_data$longitude, lat = map_data$latitude,
+             icon = red_icon, 
+             label = paste0("The conflict involved ", map_data$conflict_name, "."," ",
+                            "It started in ", map_data$year, ".", " ",
+                            "It consisted of ",  map_data$type_of_violence, "."," ",
+                            "Total number of deaths: ", map_data$total_deaths," ", "."),
+             clusterOptions = markerClusterOptions(),
+             labelOptions = labelOptions(noHide = F, 
+                                         textsize = "10px", 
+                                         direction = "bottom"))
+
+```
 
 
 
