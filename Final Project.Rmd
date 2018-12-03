@@ -1,5 +1,5 @@
 ---
-title: "Final Project Preci"
+title: "Armed Conflict Final Project"
 author: "Ghada Amer"
 date: "October 19, 2018"
 output: html_document
@@ -7,4 +7,124 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(kableExtra)
+library(rebus)
+library(lubridate)
+library(knitr)
+library(haven)
+library(formattable)
+library(janitor)
+library(purrr)
+library(fs)
+library(readr)
+library(dplyr)
+library(scales)
+library(shiny)
+library(devtools)
+library(maps)
+library(mapdata)
+library(rvest)
+library(magrittr)
+library(ggmap)
+library(devtools)
+library(plotly)
+library(countrycode)
+
+
+
+data <- read_csv("ged181.csv")
+
+
 ```
+
+```{r Clean Data}
+
+  ## In this chunk, I started cleaning the data by selecting
+  ## the variables I plan to use in my app. I removed all 
+  ## source-related variables and numeric country code schemes
+  ## as they are not relevant for the purposes of my project. I 
+  ## also chose to use the average estimate of total deaths 
+  ## instead of the lowest or highest estimates to provide more
+  ## accurate results. I recoded the type of violence values from 
+  ## a numeric code into value labels. 
+
+clean_data <-
+  data %>% 
+  select(-contains("source"), -low, -high, -contains("gwno")) %>% 
+  rename(total_deaths = best) %>% 
+  mutate(type_of_violence = case_when(
+        type_of_violence == "1" ~ "State-Based Conflict",
+        type_of_violence == "2" ~ "Non-State Conflict",
+        type_of_violence == "3" ~ "One-Sided Violence")) 
+  
+
+```
+
+
+```{r}
+
+total_percentages <-
+  clean_data %>% 
+  mutate(total_conflicts = n_distinct(id)) %>% 
+  group_by(region, total_conflicts) %>% 
+  count() %>% 
+  mutate(percentage_conflicts = n/total_conflicts*100) %>% 
+  ungroup() %>% 
+  select(region, percentage_conflicts)
+
+total_percentages_2 <-
+  clean_data %>%
+  group_by(region) %>% 
+  summarize(death_per_region = sum(total_deaths))
+
+joined_data <- inner_join(total_percentages, total_percentages_2, by = "region")
+
+total_deaths_over_time <-
+  clean_data %>% 
+  group_by(year, type_of_violence) %>% 
+  summarize(total_deaths = sum(total_deaths))
+
+```
+
+```{r}
+
+point <- format_format(big.mark = "," , scientific = FALSE)
+
+
+total_deaths_over_time %>% 
+  ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
+  geom_line() + 
+  geom_point(alpha = 0.8, size = 2) +
+  scale_y_continuous(labels = point) +
+  theme_dark() + 
+      labs(title = "Annual Deaths Over Time ",
+           subtitle = "by Type of Violence",
+           x = "Year",
+           y = "Number of Deaths",
+           color = "Type of Violence") + 
+      theme(title = element_text(size = 14, face = "bold"),
+            legend.text = element_text(size = 12, colour = "black"),
+            legend.key = element_rect(fill = "white"),
+            legend.title = element_text(face = "bold", size = 12),
+            legend.justification = c("right", "top"),
+            legend.position = "right",
+            axis.title.x = element_text(size = 14, vjust = -0.4), 
+            axis.title.y = element_text(size = 14, vjust = 0.4)) +
+      scale_color_manual("Type of Violence", values = c("State-Based Conflict" = "orange", 
+                                                     "Non-State Conflict" = "darkred", 
+                                                     "One-Sided Violence" = "lightpink"))
+```
+
+clean_data %>% 
+  ggplot(mapping = aes(x = longitude, y = latitude, group = region, fill = country)) +
+  geom_polygon(fill = "white", colour = "black")
+
+
+
+
