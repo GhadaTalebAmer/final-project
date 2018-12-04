@@ -75,10 +75,11 @@ clean_data <-
 
 deaths_year <-
   clean_data %>% 
-  group_by(year, type_of_violence) %>% 
-  summarize(total_deaths = sum(total_deaths))
+  group_by(year, type_of_violence, region) %>% 
+  summarize(total_deaths = sum(total_deaths)) 
 
 point <- format_format(big.mark = "," , scientific = FALSE)
+
 
 deaths_year %>% 
   ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
@@ -125,7 +126,9 @@ total_percentages_2 <-
   group_by(region) %>% 
   summarize(death_per_region = sum(total_deaths))
 
-joined_data <- inner_join(total_percentages, total_percentages_2, by = "region")
+joined_data <- 
+  inner_join(total_percentages, total_percentages_2, by = "region") %>% 
+  rename(region = Region)
 
 ```
 
@@ -231,6 +234,7 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
   addSearchOSM() %>%  
   addResetMapButton()
 
+map <-
 map %>% 
   addProviderTiles("Wikimedia", group = "Coloured Political Boundaries Map") %>% 
   addProviderTiles("Esri.WorldImagery", group = "Coloured Physical Map") %>% 
@@ -247,6 +251,38 @@ map %>%
 
 ```
 
+```{r}
 
+deaths_year <-
+  clean_data %>% 
+  group_by(year, type_of_violence, region) %>% 
+  summarize(total_deaths = sum(total_deaths)) 
+
+```
+
+```{r}
+
+write_rds(deaths_year, "plot_deaths_time.rds")
+write_rds(map, "map_variable.rds")
+write_rds()
+
+```
+
+
+                       dateRangeInput(inputId = "year",
+                                      label = "Select years:",
+                                      startview = "year",
+                                      start = "1989", end = "2017",
+                                      format = "year",
+                                      min = "1989", max = "2017")
+,
+                       selectizeInput(inputId = "region",
+                                          label = "Region",
+                                          choices = levels(deaths_year$region),
+                                          selected = levels(deaths_year$region))
+                                          
+                                          ,  
+        align = "c",
+        position = "center"
 
 
