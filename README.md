@@ -34,10 +34,9 @@ to the rest of the world.
 
 <b> Key Links
 
-Link to Shiny App: (https://ghada-amer.shinyapps.io/Initial_App/)
-
-Other Important Information:
 1. The Uppsala University Conflict Data Program (https://www.pcr.uu.se/research/ucdp/)
 2. List of publications which use the data (https://www.pcr.uu.se/research/ucdp/publications/)
 3. General information on conflict data, collecting it, and studying it (https://www.pcr.uu.se/research/ucdp/publications/ucdp-papers/)
+
+Link to Shiny App: (https://ghada-amer.shinyapps.io/Initial_App/)
 
