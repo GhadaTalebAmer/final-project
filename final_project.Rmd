@@ -24,7 +24,7 @@ library(leaflet.extras)
   ## Read in original csv file into 
   ## data frame called data
 
-data <- read_csv("ged181.csv")
+data <- read_csv("Data/ged181.csv")
 
 
 ```
