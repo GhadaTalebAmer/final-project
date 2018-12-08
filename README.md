@@ -24,7 +24,7 @@ Summary of Main Findings
 
 The basic unit of analysis here is an armed conflict event. Between 1989 and 2017, approximately
 143,000 distinct events occured across the world (excluding Syria). In all these events,
-the cumulative death toll of all fatalities was with the most deaths concentrated in 
+the cumulative death toll of all fatalities was approximately 2,022,000 with the most deaths concentrated in 
 continental Africa. Continental Asia recorded the second highest death toll with approximately 444,333 
 casualties within the specified time period. Continental Asia also saw the highest number of
 armed conflict events in proportion to other regions while Europe saw the lowest number 
