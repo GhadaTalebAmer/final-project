@@ -1,4 +1,4 @@
-# armed-conflict
+# Uppsala Armed Conflict Data
 
 Overview of the Project
 
