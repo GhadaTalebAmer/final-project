@@ -20,12 +20,13 @@ library(devtools)
 library(leaflet)
 library(RColorBrewer)
 library(leaflet.extras)
+library(dplyr)
 
   ## Read in original csv file into 
   ## data frame called data
 
 data <- read_csv("Data/ged181.csv")
-
+actors_list <- read_csv("actorlist.csv") 
 
 ```
 
@@ -40,6 +41,8 @@ data <- read_csv("Data/ged181.csv")
   ## accurate results. I recoded the type of violence values from 
   ## a numeric code into value labels. 
 
+
+  
 clean_data <-
   data %>% 
   select(-contains("source"), -low, -high, -contains("gwno")) %>% 
@@ -48,6 +51,31 @@ clean_data <-
         type_of_violence == "1" ~ "State-Based Conflict",
         type_of_violence == "2" ~ "Non-State Conflict",
         type_of_violence == "3" ~ "One-Sided Violence")) 
+  
+ 
+  
+
+```
+
+```{r}
+
+actors_list_a <-
+  actors_list %>% 
+  select("side_a_new_id" = "ActorID", "name_full" = "NameFull")
+
+full_name_a <-
+  right_join(actors_list_a, clean_data, by = "side_a_new_id")
+
+actors_list_b <-
+  actors_list %>% 
+  select("side_b_new_id" = "ActorID", "name_full" = "NameFull")
+
+full_name_b <-
+  right_join(actors_list_b, full_name_a, by = "side_b_new_id")
+
+clean_data_2 <-
+  full_name_b %>% 
+  unite("full_conflict_name", c("name_full.x","name_full.y"), sep = " vs. ")
 
 ```
 
@@ -67,8 +95,6 @@ deaths_year <-
   group_by(year, type_of_violence, region) %>% 
   summarize(total_deaths = sum(total_deaths)) 
 
-
-point <- format_format(big.mark = "," , scientific = FALSE)
 
 deaths_year %>% 
   ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
@@ -146,7 +172,7 @@ joined_data <-
   ## for these groups that will later be integrated into my map.
   
 map_data <-
-  clean_data %>% 
+  clean_data_2 %>% 
   distinct(id, .keep_all = TRUE)
 
 one_sided_con <-
@@ -197,11 +223,11 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
                    group = "One-Sided Conflict",
              color = violence_palette(map_data$type_of_violence),
              radius = 5, 
-             popup = paste0("The actors involved in the conflict are: ",one_sided_con$dyad_name, "."," ",
+             popup = paste0("The actors involved in the conflict are: ",one_sided_con$full_conflict_name, "."," ",
                             "The conflict started in ", one_sided_con$year, ".", " ",
                             "It consisted of ",  one_sided_con$type_of_violence, "."," ",
                             "Total number of deaths: ", one_sided_con$total_deaths," ", "."),
-             label = one_sided_con$dyad_name,
+             label = one_sided_con$full_conflict_name,
              clusterOptions = markerClusterOptions(),
              labelOptions = labelOptions(noHide = T, 
                                          textsize = "10px", 
@@ -211,12 +237,12 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
                      group = "Non-State Conflict",
              color = violence_palette(non_state_con$type_of_violence),
              radius = 5, 
-             popup = paste0("The actors involved in the conflict are: ", non_state_con$dyad_name, "."," ",
+             popup = paste0("The actors involved in the conflict are: ", non_state_con$full_conflict_name, "."," ",
                             "The conflict started in ", non_state_con$year, ".", " ",
                             "It consisted of ",  non_state_con$type_of_violence, "."," ",
                             "Total number of deaths: ", non_state_con$total_deaths," ", "."),
              popupOptions = popupOptions(direction = "auto"),
-             label = non_state_con$dyad_name,
+             label = non_state_con$full_conflict_name,
              clusterOptions = markerClusterOptions(),
              labelOptions = labelOptions(noHide = T, 
                                          textsize = "10px", 
@@ -228,11 +254,11 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
                      group = "State-Based Conflict",
              color = violence_palette(state_con$type_of_violence),
              radius = 5, 
-             popup = paste0("The actors involved in the conflict are: ", state_con$dyad_name, "."," ",
+             popup = paste0("The actors involved in the conflict are: ", state_con$full_conflict_name, "."," ",
                             "The conflict started in ", state_con$year, ".", " ",
                             "It consisted of ",  state_con$type_of_violence, "."," ",
                             "Total number of deaths: ", state_con$total_deaths," ", "."),
-             label = state_con$dyad_name,
+             label = state_con$full_conflict_name,
              clusterOptions = markerClusterOptions(),
              labelOptions = labelOptions(noHide = T, 
                                          textsize = "10px", 
@@ -251,7 +277,7 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
   addSearchOSM() %>%  
   addResetMapButton()
 
-map <-
+map<-
   map %>% 
   addProviderTiles("Wikimedia", 
                    group = "Coloured Political Boundaries Map") %>% 
