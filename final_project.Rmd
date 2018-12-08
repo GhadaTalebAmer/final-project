@@ -1,0 +1,507 @@
+---
+title: "Uppsala Armed Conflict Data"
+author: "Ghada Amer"
+date: "October 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+library(formattable)
+library(janitor)
+library(readr)
+library(dplyr)
+library(shiny)
+library(devtools)
+library(leaflet)
+library(RColorBrewer)
+library(leaflet.extras)
+library(dplyr)
+library(scales)
+
+  # Read in original csv file into 
+  # data frame called data
+
+data <- read_csv("Data/ged181.csv")
+actors_list <- read_csv("Data/actorlist.csv") 
+
+```
+
+```{r Clean Data}
+
+  # In this chunk, I started cleaning the data by selecting
+  # the variables I plan to use in my app. I removed all 
+  # source-related variables and numeric country code schemes
+  # as they are not relevant for the purposes of my project. I 
+  # also chose to use the average estimate of total deaths 
+  # instead of the lowest or highest estimates to provide more
+  # accurate results. I recoded the type of violence values from 
+  # a numeric code into value labels. 
+
+clean_data <-
+  data %>% 
+  select(-contains("source"), -low, -high, -contains("gwno")) %>% 
+  rename(total_deaths = best) %>% 
+  mutate(type_of_violence = case_when(
+        type_of_violence == "1" ~ "State-Based Conflict",
+        type_of_violence == "2" ~ "Non-State Conflict",
+        type_of_violence == "3" ~ "One-Sided Violence")) 
+
+```
+
+```{r Named Data}
+
+  # Since the names of all the actors in the original
+  # dataset were abbreviated, I found a list of 
+  # full actor names and joined it to the original
+  # data. This improves the readability of the markers
+  # in the map and the values in the tables I create. 
+
+actors_list_a <-
+  actors_list %>% 
+  select("side_a_new_id" = "ActorID", "name_full" = "NameFull")
+
+full_name_a <-
+  right_join(actors_list_a, clean_data, by = "side_a_new_id")
+
+actors_list_b <-
+  actors_list %>% 
+  select("side_b_new_id" = "ActorID", "name_full" = "NameFull")
+
+full_name_both <-
+  right_join(actors_list_b, full_name_a, by = "side_b_new_id") %>% 
+  select(id,
+         "name_full_a" = "name_full.x",
+         "name_full_b" = "name_full.y", 
+         year, 
+         latitude,
+         longitude,
+         type_of_violence,
+         dyad_name,  
+         country,
+         region, 
+         total_deaths)
+
+
+write_rds(full_name_both, "full_name_both.rds")
+
+```
+
+```{r Asia Calculations}
+
+  # Since data for each individual conflict is split
+  # into side a vs. side b, I performed the 
+  # same grouped calculations for each side 
+  # separately then binded the rows together using  
+  # similar column names. I counted for the number of 
+  # distinct conflicts each actor was engaged in 
+  # in each side and selected the top 10 in order to
+  # provide a useful overview for users. I also
+  # filtered out civilians because they do not
+  # represent active actors engaged in violence and
+  # only represent victims of one-sided violence.
+  # Repeated the following steps for each region. 
+
+asia_actors_a <-
+  full_name_both %>%
+  filter(region == "Asia", !name_full_a == "Civilians") %>% 
+  group_by(name_full_a) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_a", "n")
+
+asia_actors_b <-
+  full_name_both %>%
+  filter(region == "Asia", !name_full_b == "Civilians") %>% 
+  group_by(name_full_b) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_b", "n")
+
+asia_all_actors <-
+  bind_rows(asia_actors_a, asia_actors_b) %>% 
+  arrange(desc(n)) %>% 
+  select("Full Name of Actor", "Number of Distinct Conflicts" = "n") %>% 
+  head(n = 10)
+
+write_rds(asia_all_actors, "asia_all_actors.rds")
+
+```
+
+```{r Africa Calculations}
+
+  # Repeat of previous calculations for top 10
+  # most active actors in African region. Activity of 
+  # actor is represented by cumulative involvement in
+  # distinct armed conflict events. 
+
+africa_actors_a <-
+  full_name_both %>%
+  filter(region == "Africa", !name_full_a == "Civilians") %>% 
+  group_by(name_full_a) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_a", "n")
+
+africa_actors_b <-
+  full_name_both %>%
+  filter(region == "Africa", !name_full_b == "Civilians") %>% 
+  group_by(name_full_b) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_b", "n")
+
+africa_all_actors <-
+  bind_rows(africa_actors_a, africa_actors_b) %>% 
+  arrange(desc(n)) %>% 
+  select("Full Name of Actor", "Number of Distinct Conflicts" = "n") %>% 
+  head(n = 10)
+
+write_rds(africa_all_actors, "africa_all_actors.rds")
+
+```
+
+
+```{r Europe Calculations}
+
+ # Repeat of previous calculations for top 10
+  # most active actors in European region. Activity of 
+  # actor is represented by cumulative involvement in
+  # distinct armed conflict events. 
+
+europe_actors_a <-
+  full_name_both %>%
+  filter(region == "Europe", !name_full_a == "Civilians") %>% 
+  group_by(name_full_a) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_a", "n")
+
+europe_actors_b <-
+  full_name_both %>%
+  filter(region == "Europe", !name_full_b == "Civilians") %>% 
+  group_by(name_full_b) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_b", "n")
+
+europe_all_actors <-
+  bind_rows(europe_actors_a, europe_actors_b) %>% 
+  arrange(desc(n)) %>% 
+  select("Full Name of Actor", "Number of Distinct Conflicts" = "n") %>% 
+  head(n = 10)
+
+write_rds(europe_all_actors, "europe_all_actors.rds")
+
+```
+
+
+```{r Middle East Calculations}
+
+  # Repeat of previous calculations for top 10
+  # most active actors in Middle East region. Activity of 
+  # actor is represented by cumulative involvement in
+  # distinct armed conflict events. 
+
+mideast_actors_a <-
+full_name_both %>%
+  filter(region == "Middle East", !name_full_a == "Civilians") %>% 
+  group_by(name_full_a) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_a", "n")
+
+mideast_actors_b <-
+full_name_both %>%
+  filter(region == "Middle East", !name_full_b == "Civilians") %>% 
+  group_by(name_full_b) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_b", "n")
+
+mideast_all_actors <-
+  bind_rows(mideast_actors_a, mideast_actors_b) %>% 
+  arrange(desc(n)) %>% 
+  select("Full Name of Actor", "Number of Distinct Conflicts" = "n") %>% 
+  head(n = 10)
+
+
+write_rds(mideast_all_actors, "mideast_all_actors.rds")
+
+```
+
+
+```{r Americas Calculations}
+
+  # Repeat of previous calculations for top 10
+  # most active actors in Americas region. Activity of 
+  # actor is represented by cumulative involvement in
+  # distinct armed conflict events. 
+
+americas_actors_a <-
+  full_name_both %>%
+  filter(region == "Americas", !name_full_a == "Civilians") %>% 
+  group_by(name_full_a) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_a", "n")
+
+americas_actors_b <-
+full_name_both %>%
+  filter(region == "Americas", !name_full_b == "Civilians") %>% 
+  group_by(name_full_b) %>% 
+  count() %>% 
+  select("Full Name of Actor" = "name_full_b", "n")
+
+americas_all_actors <-
+  bind_rows(americas_actors_a, americas_actors_b) %>% 
+  arrange(desc(n)) %>% 
+  select("Full Name of Actor", "Number of Distinct Conflicts" = "n") %>% 
+  head(n = 10)
+
+write_rds(americas_all_actors, "americas_all_actors.rds")
+
+```
+
+```{r Time Line Plot}
+
+  # In this code chunk, I created a line plot of
+  # total deaths over time faceted by region and 
+  # coloured by type of violence. To do this, I 
+  # grouped the data by year, type of violence and 
+  # region then calculated the sums of the groups.
+  # I chose to use a line plot to better display
+  # trends over time. I also added stylistic features 
+  # to the plot to improve its appearance and readability.
+
+deaths_year <-
+  clean_data %>% 
+  group_by(year, type_of_violence, region) %>% 
+  summarize(total_deaths = sum(total_deaths))
+
+
+point <- format_format(big.mark = "," , scientific = FALSE)  
+
+
+deaths_year %>% 
+  ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
+  geom_line()  +
+  geom_point(alpha = 0.8, size = 2) + 
+  scale_y_continuous(labels = point) + 
+  theme_dark() + 
+      labs(title = "Annual Deaths Over Time (1989-2017)",
+           subtitle = "by Type of Violence",
+           x = "Year",
+           y = "Number of Deaths",
+           color = "Type of Violence") + 
+      theme(title = element_text(size = 14, face = "bold"),
+            legend.text = element_text(size = 12, colour = "black"),
+            panel.background = element_rect(fill = "black"),
+            legend.key = element_rect(fill = "white"),
+            legend.title = element_text(face = "bold", size = 12),
+            legend.justification = c("right", "top"),
+            legend.position = "right",
+            axis.title.x = element_text(size = 14, vjust = -0.4), 
+            axis.title.y = element_text(size = 14, vjust = 0.4)) +
+      scale_color_manual("Type of Violence", values = c("State-Based Conflict" = "orange", 
+                                                     "Non-State Conflict" = "darkred", 
+                                                     "One-Sided Violence" = "lightpink"))
+
+write_rds(deaths_year, "plot_deaths_time.rds")
+
+```
+
+
+```{r Time Calculations}
+
+  # In this code chunk, I calculated various summary
+  # statistics of the data. I chose to calculate the 
+  # percentage of global conflicts that occured in 
+  # each region and the total number of deaths in
+  # each region since 1989. These summary statistics
+  # will provide a useful overview of the data
+  # broken down by region. I will display these 
+  # calculations as a table in my app to provide users
+  # with more information. 
+
+total_percentages <-
+  clean_data %>% 
+  mutate(total_conflicts = n_distinct(id)) %>% 
+  group_by(region, total_conflicts) %>% 
+  count() %>% 
+  mutate(percentage_conflicts = n/total_conflicts) %>% 
+  ungroup() %>% 
+  adorn_pct_formatting(digits = 0) %>% 
+  select(region, percentage_conflicts)
+
+total_percentages_2 <-
+  clean_data %>%
+  group_by(region) %>% 
+  summarize(death_per_region = sum(total_deaths))
+
+joined_data <- 
+  inner_join(total_percentages, total_percentages_2, by = "region") %>% 
+  select("Region" = "region", 
+         "Percentage of Total Global Conflicts (%)" = "percentage_conflicts", 
+         "Total Number of Regional Casualties" = "death_per_region")
+
+
+  write_rds(joined_data, "regional_calculations.rds")
+
+```
+
+```{r Leaflet Map Calculations}
+
+  # In this code chunk, I created some objects that I 
+  # will need in my leaflet map. I split up my data into
+  # groups of violence types that will later be integrated
+  # into my map to allow the user to toggle between different
+  # violence categories. 
+  
+clean_data_2 <-
+  full_name_both %>% 
+  unite("full_conflict_name", c("name_full_a","name_full_b"), sep = " vs. ")
+
+map_data <-
+  clean_data_2 %>% 
+  distinct(id, .keep_all = TRUE)
+
+one_sided_con <-
+  map_data %>% 
+  filter(type_of_violence == "One-Sided Violence")
+
+non_state_con <-
+  map_data %>% 
+  filter(type_of_violence == "Non-State Conflict")
+
+state_con <-
+  map_data %>% 
+  filter(type_of_violence == "State-Based Conflict")
+  
+  # I also created a colour palette for the type of 
+  # conflict groups that will later be integrated into my map
+  # to colour markers by type. I chose reds as my chosen 
+  # palette to also increase contrast with black map. 
+
+violence_palette <- 
+   colorFactor(palette = "Reds", 
+               levels = c("State-Based Conflict", 
+                          "Non-State Conflict",
+                          "One-Sided Violence"))
+
+```
+
+```{r Leaflet Map}
+
+  # In this code chunk, I created a leaflet map. I found
+  # a geo-referenced dataset that contained longitude and
+  # latitude information which I could use to plot markers.
+  # I added circle markers in three layers for each group.
+  # I also added base map in three layers to allow the user
+  # to toggle between different map types for 
+  # visualization purposes. I chose a black and white map to
+  # be the default map for contrast with the coloured markers.
+
+map <- 
+leaflet(options = leafletOptions(minZoom = 2)) %>% 
+  addProviderTiles("CartoDB.DarkMatter", 
+                   group = "Black and White Political Boundaries Map") %>% 
+  setMaxBounds(lng1 = 180 ,
+               lat1 = 90, 
+               lng2 = -180, 
+               lat2 = -90) %>% 
+  
+  # I added circle markers in layers so that the user can 
+  # choose which conflict types to display. Each conflict
+  # group is represented by a different shade of red.
+  
+  addCircleMarkers(lng = one_sided_con$longitude, 
+                   lat = one_sided_con$latitude,
+                   group = "One-Sided Conflict",
+             color = violence_palette(map_data$type_of_violence),
+             radius = 5, 
+             popup = paste0("The actors involved in the conflict are: ",
+                            one_sided_con$full_conflict_name, "."," ",
+                            "The conflict started in ", one_sided_con$year, ".", " ",
+                            "It consisted of ",  one_sided_con$type_of_violence, "."," ",
+                            "Total number of deaths: ", one_sided_con$total_deaths," ", "."),
+             label = one_sided_con$full_conflict_name,
+             clusterOptions = markerClusterOptions(),
+             labelOptions = labelOptions(noHide = T, 
+                                         textsize = "10px", 
+                                         direction = "bottom")) %>% 
+  
+    # Added both labels and popups to provide more info. I chose to 
+    # only display labels on hover so as to not clutter the map. I also 
+    # chose to display popups on click and not automatically to make
+    # the map clearer to read. I chose to cluster the markers for added
+    # readibility and to show zones which zones witnessed greater conflict.
+  
+    addCircleMarkers(lng = non_state_con$longitude, 
+                     lat = non_state_con$latitude,
+                     group = "Non-State Conflict",
+             color = violence_palette(non_state_con$type_of_violence),
+             radius = 5, 
+             popup = paste0("The actors involved in the conflict are: ",
+                            non_state_con$full_conflict_name, "."," ",
+                            "The conflict started in ", non_state_con$year, ".", " ",
+                            "It consisted of ",  non_state_con$type_of_violence, "."," ",
+                            "Total number of deaths: ", non_state_con$total_deaths," ", "."),
+             popupOptions = popupOptions(direction = "auto"),
+             label = non_state_con$full_conflict_name,
+             clusterOptions = markerClusterOptions(),
+             labelOptions = labelOptions(noHide = F, 
+                                         textsize = "10px", 
+                                         direction = "auto",
+                                         opacity = 0.75,
+                                         interactive = TRUE )) %>% 
+    addCircleMarkers(lng = state_con$longitude,
+                     lat = state_con$latitude,
+                     group = "State-Based Conflict",
+             color = violence_palette(state_con$type_of_violence),
+             radius = 5, 
+             popup = paste0("The actors involved in the conflict are: ",
+                            state_con$full_conflict_name, "."," ",
+                            "The conflict event occured in ", state_con$year, ".", " ",
+                            "It consisted of ",  state_con$type_of_violence, "."," ",
+                            "Total number of deaths: ", state_con$total_deaths," ", "."),
+             label = state_con$full_conflict_name,
+             clusterOptions = markerClusterOptions(),
+             labelOptions = labelOptions(noHide = F, 
+                                         textsize = "10px", 
+                                         direction = "bottom")) %>% 
+  addLegend(pal = violence_palette,
+                   values = c("State-Based Conflict",
+                              "Non-State conflict",
+                              "One-Sided Violence" ),
+                   opacity = 0.7,
+                   title = "Type of Violence",
+                   position = "bottomright") %>% 
+  addSearchFeatures(targetGroups = 
+                      c('One-Sided Violence', 
+                      'Non-State Conflict', 
+                      'State-Based Conflict')) %>% 
+  addSearchOSM() %>%  
+  addResetMapButton()
+
+  # Chose to also include different base maps to 
+  # give the user the option to choose which type of map
+  # is best for their individual purposes (e.g. political that
+  # displays state boundaries vs. physical that displays
+  # geographic features). 
+
+map <-
+  map %>% 
+  addProviderTiles("Wikimedia", 
+                   group = "Coloured Political Boundaries Map") %>% 
+  addProviderTiles("Esri.WorldImagery",
+                   group = "Coloured Physical Map") %>% 
+  addProviderTiles("CartoDB.DarkMatter", 
+                   group = "Black and White Political Boundaries Map") %>% 
+  addLayersControl(baseGroups = c("Black and White Political Boundaries Map", 
+                                  "Coloured Political Boundaries Map",
+                                  "Coloured Physical Map"),
+                   overlayGroups = 
+                     c("One-Sided Violence", 
+                      "Non-State Conflict", 
+                      "State-Based Conflict")) 
+
+
+write_rds(map, "map_variable.rds")
+
+```
