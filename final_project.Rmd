@@ -95,6 +95,7 @@ deaths_year <-
   group_by(year, type_of_violence, region) %>% 
   summarize(total_deaths = sum(total_deaths)) 
 
+point <- format_format(big.mark = "," , scientific = FALSE)  
 
 deaths_year %>% 
   ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
@@ -237,7 +238,8 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
                      group = "Non-State Conflict",
              color = violence_palette(non_state_con$type_of_violence),
              radius = 5, 
-             popup = paste0("The actors involved in the conflict are: ", non_state_con$full_conflict_name, "."," ",
+             popup = paste0("The actors involved in the conflict are: ",
+                            non_state_con$full_conflict_name, "."," ",
                             "The conflict started in ", non_state_con$year, ".", " ",
                             "It consisted of ",  non_state_con$type_of_violence, "."," ",
                             "Total number of deaths: ", non_state_con$total_deaths," ", "."),
@@ -277,7 +279,7 @@ leaflet(options = leafletOptions(minZoom = 2)) %>%
   addSearchOSM() %>%  
   addResetMapButton()
 
-map<-
+map <-
   map %>% 
   addProviderTiles("Wikimedia", 
                    group = "Coloured Political Boundaries Map") %>% 
