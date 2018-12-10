@@ -1,192 +1,247 @@
-  ## Install necessary packages and download libraries 
-  ## as below.
+  # Install necessary packages and download libraries 
+  # as below.
+
+
 
 library(shiny)
 library(tidyverse)
 library(tidytext)
 library(ggplot2)
 library(shinythemes)
-library(shinydashboard)
+library(leaflet)
+library(RColorBrewer)
+library(leaflet.extras)
 library(DT)
 
-  ## Read in the .rds files from the Initial App folder in
-  ## the repository. Read in additional csv file of a list of 
-  ## actors to include in the report.
+  # Read in the .rds files from the Initial App folder in
+  # the repository. 
 
-map <- read_rds("map_variable.rds")
+map <- read_rds("map_output.rds")
 plot <- read_rds("plot_deaths_time.rds")
 regional_calculations <- read_rds("regional_calculations.rds")
-actors_list <- read_csv("actorlist.csv") %>% 
-select("Abbreviated Name of Actor" = "Name", "Full Name of Actor" = "NameFull")
+africa_all_actors <- read_rds("africa_all_actors.rds")
+asia_all_actors <- read_rds("asia_all_actors.rds")
+europe_all_actors <- read_rds("europe_all_actors.rds")
+americas_all_actors <- read_rds("americas_all_actors.rds")
+mideast_all_actors <- read_rds("mideast_all_actors.rds")
+full_name_both <- read_rds("full_name_both.rds")
+point <- format_format(big.mark = "," , scientific = FALSE)
 
     
     ui <- fluidPage(theme = shinytheme("cyborg"),
                     
       
-      titlePanel(h1("Global Armed Conflict Exploratory Dashboard"),
+      titlePanel(h3("Global Armed Conflict Exploratory Dashboard"),
                  windowTitle = "Armed Conflict Dashboard"),
                  h4("Ghada Amer"),
       
-      ## Created a tabset panel to create a dashboard-like 
-      ## appearance for the app. It consists of four 
-      ## tabs. Each tab contains a side bar
-      ## with descriptions/instructions and a main panel
-      ## of relevant outputs. For text outputs, I chose to
-      ## include text directly in main panel outputs to 
-      ## make it easier to manipulate the appearance.
+      # Created a tabset panel to create a dashboard-like 
+      # appearance for the app. It consists of two overview
+      # tabs followed by a tab for each region. I chose to do 
+      # provide users with outputs that showed overviews of the 
+      # data and outputs that were specific to each region to 
+      # provide a more in-depth understanding of the data.
       
       tabsetPanel(
   
         tabPanel(
           title = "Interactive Map",
-          sidebarPanel(width = 2,
-                         h5("Instructions"),
-                         p("Poke around this interactive map to explore different armed 
-                          conflict events between 1989 and 2017 around the world. Hover
-                          over markers to view information related to each event, such 
-                          as the number of casualties or the names of actors involved.
-                          You can also toggle between different map types and filter
-                          conflicts depending on the type of violence that occured.")),
+          sidebarPanel(width = 3,
+                         h5("Overview"),
+                         p("The data used in this dashboard has been collected by the
+                            The Uppsala Conflict Data Program (UCDP) Department of
+                            Peace and Conflict Research and the International 
+                            Peace Research Institute (PRIO) in Oslo."),
+                        br(),
+                        p("Through this project, I was interested in exploring regional and 
+                          global trends in armed conflict following the Cold War era. The dataset 
+                          used here contains information on 142,902 incidents of armed conflict between
+                          the years 1989 and 2017. The term armed conflict refers to any act 
+                          of organized violence between two actors that involved at least one 
+                          fatality. Each event in the  dataset contains information on: the
+                          geographic location of the conflict, the actors involved,
+                          the type of violence displayed and various estimations of the number 
+                          of casualties involved."),
+                        br(),
+                        img(src = "https://cdn.freebiesupply.com/logos/large/2x/uppsala-universitet-logo-black-and-white.png", 
+                            width = "200px",
+                           height = "230px")),
+          
+          
+          # Choice of leaflet output size to make sure
+          # all features that the user can toggle with are 
+          # visible in the front page without having to scroll.
+          
+          
           mainPanel(
-            h4("World Map of Armed Conflict Events (1989 - 2017)"),
-            leafletOutput(outputId = "leaflet_map", width = 950, height = 600)
+            h4("World Map of Armed Conflict Events from 1989 to 2017"),
+            leafletOutput(outputId = "leaflet_map", width = 890, height = 600)
                   )
                 ),
             
          tabPanel(
-          title = "Charts",
+          title = "Explore Conflict over Time",
           sidebarPanel(width = 2,
-                       h5("Description"),
-                       p("The charts displayed show the annual total of casualties 
-                         in each region over time. Each line represents conflicts with
-                         different types of violence. The summary table below displays
-                         the percentage of total global armed conflicts that occured 
-                         in the specified region between 1989 and 2017. The table also
-                         displays the cumulative number of regional casualties (including
-                         civilians) on all sides within that time period.")),
+                       h5("Overview"),
+                       p("Between 1989 and 2017, approximately 143,000 distinct conflict events
+                          occured across the world (excluding Syria). In all these events,
+                          the cumulative death toll of all fatalities was 2,022,229 with the most 
+                          deaths concentrated in continental Africa. The most fatalities in all 
+                          regions (excluding Africa) have been a result of state-based conflict,
+                          in which the governments of at least two states are involved in organized 
+                          armed violence. By considering the distribution of casualities in each 
+                          region over time, key trends and changes can be seen.")),
           mainPanel(width = 10,
             plotOutput(outputId = "lineplot", width = 950, height = 600),
             hr(),
-            h5("View Regional Breakdown of Total Casualties and Percentage of Global Conflicts"),
+            h5("Regional Breakdown of Total Casualties and Percentage of Global Conflicts"),
             tableOutput(outputId = "table")
                     )
                 ),
         
+        
+        # Each tab for each region contains a side bar with an overview
+        # decription that gives users a quick summary of main 
+        # findings. This would give users a small overview of important trends 
+        # and events that may be interesting to them. Also, for 
+        # such text outputs, I chose to include text 
+        # directly in main panel outputs to 
+        # make it easier to manipulate the content and appearance.
+        
          tabPanel(
-          title = "List of Actors",
-          sidebarPanel(width = 3,
-                       h5("Description"),
+          title = "Africa",
+          sidebarPanel(width = 2,
+                       h5("Overview"),
                        p("The label markers of individual armed conflict events in the 
                          interactive map contain abbreviated non-state actor names. For 
                          example, CPI refers to the Communist Party of India. To get a 
                          better understanding of who was involved in the conflict,
                          use the list to search for the full name of the actor.")),
-          mainPanel(
-            h5("Actors List"),
-            dataTableOutput("actors_list")
+          mainPanel( 
+            br(),
+            plotOutput(outputId = "africa_deaths_country", width = 975),
+            hr(),
+            h5("Top 10 Most Active State and Non-State Actors in Africa"),
+            p("In Africa, The Government of Algeria was involved in the highest number
+              of armed conflicts post-Cold War"),
+            tableOutput(outputId = "actor_table_africa")
                     )
                 ),
           
          tabPanel(
-            title = "Report",
-            sidebarPanel(width = 3),
+            title = "North, Central & South America",
+            sidebarPanel(width = 2,
+                         h5("Overview"),
+                         p("The majority of armed conflict events and subsequent deaths in this 
+                           region occured in Central  and South America. Notable civil wars stand 
+                           out such as that of Guatemala and El Salvador. An increase in regional gang
+                           violence and armed revolutionary groups contributed to increased rates
+                           of non-state violence.")), 
             mainPanel(
-              h5(tags$em("Understanding the Findings of the Armed Conflict Exploratory Dashboard")),
               br(),
-              h5("Overview of the Data"),
-              br(),
-              p("The data used in this dashboard has been collected by the",
-                tags$b("Uppsala Conflict Data Program (UCDP)"), "of the", 
-                tags$b(" Department of Peace and Conflict Research and the International 
-                     Peace Research Institute (PRIO)"), "in Oslo."),
-              p("The dataset contains information on 142,902 incidents of armed conflict between
-                the years 1989 and 2017. The term armed conflict refers to any act of organized  
-                violence between two actors that involved at least one fatality. Each event in the
-                dataset contains information on: the geographic location of the conflict, the actors involved,
-                the type of violence displayed and various estimations of the number of casualties involved."),
-              br(),
-              h5("Significance and Purpose of the Project"),
-              br(),
-              p("The rationale for the project created here is an academic exploration of armed conflicts
-                 around the world. By taking a historical perspective on conflict, those interested in the topic
-                 can understand global trends in violence and how these trends play out regionally. With a 
-                 contemporary increase in non-state actors such as militias and armed resistance groups, it is
-                 important to study the emergence of such groups and map their activities globally. By breaking down
-                 the visualizations of the data into categories of violence, one can also get a better understanding 
-                 of aggressor states that are involved in one-sided violence against their people."),
-              br(),
-              h5("Summary of Main Findings"),
-              br(),
-              p("The basic unit of analysis here is an armed conflict event. Between 1989 and 2017, approximately
-                143,000 distinct events occured across the world (excluding Syria). In all these events,
-                the cumulative death toll of all fatalities was", tags$b("2,022,229"), "with the most 
-                deaths concentrated in continental Africa. Continental Asia recorded the second highest
-                death toll with approximately 444,333 casualties within the specified time period. Continental
-                Asia also saw the highest number of armed conflict events in proportion to other regions while 
-                Europe saw the lowest number of armed conflicts globally. North and South America 
-                saw the lowest death toll relative to other regions and the second lowest percentage of armed 
-                conflicts relative to the rest of the world."),
-              br(),
-              h5("Key Trends in Armed Conflict and Important Events"),
-              br(),
-              p("The most fatalities in all regions (excluding Africa) have been a result of state-based conflict,
-                in which the governments of at least two states are involved in organized armed violence. By considering
-                the distribution of casualities in each region over time, key trends and changes can be seen. These
-                trends will be analyzed by region."), 
-              br(),
-              h6("The Middle East"),
-              br(),
-              p("In the Middle East, a sharp increase in state-based conflict in 2012 was met with a steady decline 
-                 post-2015. As a result of civil wars in Syria and Iraq, the number of regional deaths and state-based
-                 violence significantly increased. However, when considered relative to the entire time period,
-                 the Middle East witnessed the third lowest number of deaths and armed conflicts in comparison
-                 to the rest of the world."),
-              br(),
-              h6("Africa"),
-              br(),
-              p("Continental Africa witnessed the highest number of deaths between 1989 and 2017. The majority of deaths
-                 have been a result of one-sided violence. A key peak in one-sided violence occured in 1994 as a result
-                 of the Rwandan Genocide. The best estimate of deaths in the Rwandan Genocide is approximately 500,000. 
-                 Post-2000, continental Africa has witnessed low rates of state-based conflict, non-state conflict and
-                 one-sided violence. "),
-              br(),
-              h6("Asia"),
-              br(),
-              p("Continental Asia has witnessed the second-highest rates of state-based conflict in the world. In 
-                  comparison to other regions, the trend of state-based conflict has increased in recent years. 
-                  Central and South Asia in particular display the second-highest rates of organized one-sided violence."),
-              br(),
-              h6("Europe"),
-              br(),
-              p("The European continent has witnessed the lowest number of armed conflicts between 1989 and 2017 relative
-                  to the rest of the world. However, trends in European casualities over time appear more sudden and changing
-                  than those of other regions. Contemporary events of armed violence in Europe stand out, such as
-                  the Insurgency in the North Caucasus and the ongoing conflict between Russia and Ukraine."),
-              br(),
-              h6("North and South America"),
-              br(),
-              p("The majority of armed conflict events and subsequent deaths in this region occured in Central 
-                 and South America. Notable civil wars stand out such as that of Guatemala and El Salvador. An
-                 increase in regional gang violence and armed revolutionary groups contributed to increased rates
-                 of non-state violence.")
-              )
-            )
+              plotOutput(outputId = "americas_deaths_country", width = 800),
+              hr(),
+              h5("Top 10 Most Active State and Non-State Actors in the Americas"),
+              p("In the Americas, the Government of Colombia was involved in the highest
+                number of armed conflicts post-Cold War"),
+              tableOutput(outputId = "actor_table_americas")
+                    )
+                ),
+        tabPanel(
+          title = "Asia",
+          sidebarPanel(width = 2,
+                       h5("Overview"),
+                       p("Continental Asia has witnessed the second-highest rates of state-based 
+                          conflict in the world. In comparison to other regions, the trend of
+                          state-based conflict has increased in recent years. Central and South 
+                          Asia in particular display the second-highest rates of organized one-sided violence.")),
+          mainPanel(
+            br(),
+            plotOutput(outputId = "asia_deaths_country", width = 800),
+            hr(),
+            h5("Top 10 Most Active State and Non-State Actors in Asia"),
+            p("In Asia, the Government of Afghanistan was involved in the highest
+              number of armed conflicts post-Cold War"),
+            tableOutput(outputId = "actor_table_asia")
+                  )
+                ),
+        tabPanel(
+          title = "Middle East",
+          sidebarPanel(width = 2,
+                       h5("Overview"),
+                       p("In the Middle East, a sharp increase in state-based conflict in 2012
+                          was met with a steady decline post-2015. As a result of civil wars in
+                          Syria and Iraq, the number of regional deaths and state-based
+                          violence significantly increased. However, when considered relative to 
+                          the entire time period, the Middle East witnessed the third lowest
+                          number of deaths and armed conflicts in comparison
+                          to the rest of the world.")),
+          mainPanel(
+            br(),
+            plotOutput(outputId = "mideast_deaths_country", width = 800),
+            hr(),
+            h5("Top 10 Most Active State and Non-State Actors in the Middle East"),
+            p("In the Middle East, the Government of Iraq was involved in the
+              highest number of armed conflicts post-Cold War"),
+            tableOutput(outputId = "actor_table_mideast")
+                   )
+                ),
+        tabPanel(
+          title = "Europe",
+          sidebarPanel(width = 2,
+                       h5("Overview"),
+                       p("The European continent has witnessed the lowest number of armed conflicts 
+                          between 1989 and 2017 relative to the rest of the world. However, trends 
+                          in European casualities over time appear more sudden and changing than those 
+                          of other regions. Contemporary events of armed violence in Europe stand out, 
+                          such as the Insurgency in the North Caucasus and the ongoing conflict between 
+                          Russia and Ukraine.")),
+          mainPanel(
+            br(),
+            plotOutput(outputId = "europe_deaths_country", width = 800),
+            hr(),
+            h5("Top 10 Most Active State and Non-State Actors in Europe"),
+            p("In Europe, the Government of the Soviet Union was involved in 
+              the highest number of armed conflicts post-Cold War"),
+            tableOutput(outputId = "actor_table_europe")
           )
         )
-
+      )
+    )
     
     
     server <- function(input, output) {
 
-      ## My main outputs consist of a faceted line plot, a table,
-      ## a searchable data table and a leaflet map. None of these
-      ## outputs are reactive. I made the decision to only
-      ## include an interactive map that would be sufficient
-      ## enough for the user to toggle between. 
+      # My main outputs consist of a faceted line plot, a table,
+      # a searchable data table and a leaflet map. None of these
+      # outputs are reactive. I made the decision to only
+      # include an interactive map that would be sufficient
+      # enough for the user to toggle between. All the other
+      # visualizations such as tables and graphs are not interactive
+      # because I wanted the user to focus on overview trends. 
       
       output$lineplot <- renderPlot({
     
-     
+        # Created point value that removed scientific notation 
+        # to improve appears of y-axis labels and for better
+        # user readability. 
+        
+        point <- format_format(big.mark = "," , scientific = FALSE)  
+        
+        # I created a line plot of
+        # total deaths over time faceted by region and 
+        # coloured by type of violence. To do this, I 
+        # grouped the data by year, type of violence and 
+        # region then calculated the sums of the groups.
+        # I chose to use a line plot to better display
+        # trends over time. I also added stylistic features 
+        # to the plot to improve its appearance and readability.
+        # Choice of pastel-like colours for violence
+        # groups for added contrast with the black
+        # background. Also added points to the line
+        # plot to improve readability and show different
+        # years clearly. 
+        
         plot %>% 
         ggplot(aes(x = year, y = total_deaths, colour = type_of_violence)) +
           geom_line()  +
@@ -199,19 +254,19 @@ select("Abbreviated Name of Actor" = "Name", "Full Name of Actor" = "NameFull")
                x = "Year",
                y = "Number of Casualties",
                color = "Type of Violence") + 
-          theme(title = element_text(size = 20, face = "bold", colour = "white"),
+          theme(title = element_text(size = 16, face = "bold", colour = "white"),
                 legend.text = element_text(size = 12, colour = "white"),
+                plot.background = element_rect(fill = "black", colour = "black"),
                 panel.background = element_rect(fill = "black"),
                 strip.text = element_text(size = 14),
                 panel.grid = element_line(colour = "gray"),
-                plot.background = element_rect(fill = "black"),
                 legend.key = element_rect(fill = "black"),
                 legend.title = element_text(face = "bold", size = 12, colour = "white"),
                 legend.background = element_rect(fill = "black"),
                 legend.justification = c("right", "top"),
                 legend.position = "right",
-                axis.title.x = element_text(size = 14, vjust = -0.4, colour = "white"), 
-                axis.title.y = element_text(size = 14, vjust = 0.4, colour = "white")) +
+                axis.title.x = element_text(size = 15, vjust = -0.4, colour = "white"), 
+                axis.title.y = element_text(size = 15, vjust = 0.4, colour = "white")) +
           scale_color_manual("Type of Violence", values = c("State-Based Conflict" = "orange", 
                                                             "Non-State Conflict" = "darkred", 
                                                             "One-Sided Violence" = "lightpink"))
@@ -225,27 +280,238 @@ select("Abbreviated Name of Actor" = "Name", "Full Name of Actor" = "NameFull")
       
       output$table <- renderTable(
         
+        # Read in calculations made in rmd file
+        # into a table format instead of performing repeated
+        # calculations on this file. Only added stylistic
+        # table features here to improve appearance of the 
+        # table output.
+        
         {regional_calculations},
+          striped = TRUE,
+          spacing = "l",
+          align = "ccc",
+          digits = 4,
+          position = "left",
+          width = "90%",
+          title = "Regional Breakdown of Total Casualties and Percentage of Global Conflicts"
+      )
+      
+      
+      output$actor_table_asia <- renderTable(
+        
+        # For each region, created a table of top
+        # 10 actors involved in conflict. Only chose to 
+        # show 10 to provide a useful overview that would 
+        # be significant. Added similar table for each region
+        # tab with same stylistic choices to maintain
+        # consistency across all tabs. 
+        
+        {asia_all_actors},
+          striped = TRUE,
+          spacing = "l",
+          align = "cc",
+          position = "right",
+          width = "90%"
+      )
+      
+      output$actor_table_africa <- renderTable(
+        
+        {africa_all_actors},
         striped = TRUE,
         spacing = "l",
-        align = "ccc",
-        digits = 4,
-        position = "left",
-        width = "90%",
-        title = "Regional Breakdown of Total Casualties and Percentage of Global Conflicts"
-      ) 
+        align = "cc",
+        position = "right",
+        width = "90%"
+      )
       
+      output$actor_table_europe <- renderTable(
+        
+        {europe_all_actors},
+        striped = TRUE,
+        spacing = "l",
+        align = "cc",
+        position = "right",
+        width = "90%"
+      )
+
+      output$actor_table_americas <- renderTable(
+        
+        {americas_all_actors},
+        striped = TRUE,
+        spacing = "l",
+        align = "cc",
+        position = "right",
+        width = "90%"
+      )
       
-      output$actors_list <- renderDataTable({
+      output$actor_table_mideast <- renderTable(
         
-        datatable(actors_list, 
-                  caption = "Search for Full Names of State and Non-State Actors 
-                            in Interactive Map Descriptions", selection = "none")  %>%  
-          formatStyle(c('Abbreviated Name of Actor','Full Name of Actor'),
-                      backgroundColor = 'black')
+        {mideast_all_actors},
+        striped = TRUE,
+        spacing = "l",
+        align = "cc",
+        position = "right",
+        width = "90%"
+      )
+      
+      output$asia_deaths_country <- renderPlot(
+        
+        # Created line plot of deaths by country in each 
+        # region over time to show a different perspective 
+        # on the data. Choice of stacked bar plot to clearly
+        # show differences between countries. Repeated 
+        # this for all region tabs to maintain consistency. 
+        
+          full_name_both %>%
+          filter(region == "Asia") %>% 
+          group_by(country, year) %>% 
+          summarize(total_deaths = sum(total_deaths)) %>% 
+          arrange(desc(year)) %>% 
+          ggplot(aes(x = year, y = total_deaths, fill = country)) +
+          geom_col() +
+          theme_dark() +
+          labs(title = "Breakdown of Annual Casualties by Country in Asia",
+               subtitle = "On average, Afghanistan consistently witnessed the most casualties",
+               x = "Year",
+               y = "Total Casualties",
+               fill = "Country") +
+          scale_y_continuous(labels = point) + 
+          theme(title = element_text(size = 16, face = "bold", colour = "white"),
+                plot.subtitle = element_text(size = 14), 
+                plot.background = element_rect(fill = "black", colour = "black"),
+                legend.text = element_text(size = 12, colour = "white"),
+                legend.background = element_rect(fill = "black"),
+                panel.background = element_rect(fill = "black"),
+                legend.key = element_rect(fill = "black"),
+                legend.title = element_text(face = "bold", size = 12),
+                legend.justification = c("right"),
+                legend.position = "right",
+                axis.title.x = element_text(size = 15, vjust = -0.4), 
+                axis.title.y = element_text(size = 15, vjust = 0.4)) 
+      )
+      
+      output$africa_deaths_country <- renderPlot(
+        
+        full_name_both %>%
+          filter(region == "Africa") %>% 
+          group_by(country, year) %>% 
+          summarize(total_deaths = sum(total_deaths)) %>% 
+          arrange(desc(year)) %>% 
+          ggplot(aes(x = year, y = total_deaths, fill = country)) +
+          geom_col() +
+          theme_dark() +
+          labs(title = "Breakdown of Annual Casualties by Country in Africa",
+               subtitle = "With the exception of Rwanda in 1994, no African country witnesses consistently high rates of casualties",
+               x = "Year",
+               y = "Total Casualties",
+               fill = "Country") +
+          scale_y_continuous(labels = point) + 
+          theme(title = element_text(size = 15, face = "bold", colour = "white"),
+                plot.subtitle = element_text(size = 14),
+                plot.background = element_rect(fill = "black", colour = "black"),
+                legend.text = element_text(size = 12, colour = "white"),
+                legend.background = element_rect(fill = "black"),
+                panel.background = element_rect(fill = "black"),
+                legend.key = element_rect(fill = "black"),
+                legend.title = element_text(face = "bold", size = 12),
+                legend.justification = c("right"),
+                legend.position = "right",
+                axis.title.x = element_text(size = 15, vjust = -0.4), 
+                axis.title.y = element_text(size = 15, vjust = 0.4)) 
+      )
+      
+      output$europe_deaths_country <- renderPlot(
         
         
-      })
+        full_name_both %>%
+          filter(region == "Europe") %>% 
+          group_by(country, year) %>% 
+          summarize(total_deaths = sum(total_deaths)) %>% 
+          arrange(desc(year)) %>%
+          ggplot(aes(x = year, y = total_deaths, fill = country)) +
+          geom_col() +
+          theme_dark() +
+          labs(title = "Breakdown of Annual Casualties by Country in Europe ",
+               subtitle = "Countries in Eastern Europe witnessed higher rates of casualties than Western Europe",
+               x = "Year",
+               y = "Total Casualties",
+               fill = "Country") +
+          scale_y_continuous(labels = point) + 
+          theme(title = element_text(size = 16, face = "bold", colour = "white"),
+                plot.subtitle = element_text(size = 14),
+                plot.background = element_rect(fill = "black", colour = "black"),
+                legend.text = element_text(size = 12, colour = "white"),
+                legend.background = element_rect(fill = "black"),
+                panel.background = element_rect(fill = "black"),
+                legend.key = element_rect(fill = "black"),
+                legend.title = element_text(face = "bold", size = 12),
+                legend.justification = c("right"),
+                legend.position = "right",
+                axis.title.x = element_text(size = 15, vjust = -0.4), 
+                axis.title.y = element_text(size = 15, vjust = 0.4)) 
+      )
+      
+      output$americas_deaths_country <- renderPlot(
+        
+        
+        full_name_both %>%
+          filter(region == "Americas") %>% 
+          group_by(country, year) %>% 
+          summarize(total_deaths = sum(total_deaths)) %>% 
+          arrange(desc(year)) %>%  
+          ggplot(aes(x = year, y = total_deaths, fill = country)) +
+          geom_col() +
+          theme_dark() +
+          scale_y_continuous(labels = point) + 
+          labs(title = "Breakdown of Annual Casualties by Country in the Americas",
+               subtitle = "Mexico and Colombia consistently witnessed the highest rates of casualties",
+               x = "Year",
+               y = "Total Casualties",
+               fill = "Country") +
+          theme(title = element_text(size = 16, face = "bold", colour = "white"),
+                plot.subtitle = element_text(size = 14),
+                plot.background = element_rect(fill = "black", colour = "black"),
+                legend.text = element_text(size = 12, colour = "white"),
+                legend.background = element_rect(fill = "black"),
+                panel.background = element_rect(fill = "black"),
+                legend.key = element_rect(fill = "black"),
+                legend.title = element_text(face = "bold", size = 12),
+                legend.justification = c("right"),
+                legend.position = "right",
+                axis.title.x = element_text(size = 15, vjust = -0.4), 
+                axis.title.y = element_text(size = 15, vjust = 0.4)) 
+      )
+      
+      output$mideast_deaths_country <- renderPlot(
+        
+        
+        full_name_both %>%
+          filter(region == "Middle East") %>% 
+          group_by(country, year) %>% 
+          summarize(total_deaths = sum(total_deaths)) %>% 
+          arrange(desc(year)) %>%  
+          ggplot(aes(x = year, y = total_deaths, fill = country)) +
+          geom_col() +
+          scale_y_continuous(labels = point) + 
+          theme_dark() +
+          labs(title = "Breakdown of Annual Casualties by Country in the Middle East ",
+               subtitle = "Egypt and Iraq consistently witnessed the highest rates of casualties over time",
+               x = "Year",
+               y = "Total Casualties",
+               fill = "Country") +
+          theme(title = element_text(size = 16, face = "bold", colour = "white"),
+                plot.subtitle = element_text(size = 14),
+                plot.background = element_rect(fill = "black", colour = "black"),
+                legend.text = element_text(size = 12, colour = "white"),
+                legend.background = element_rect(fill = "black"),
+                panel.background = element_rect(fill = "black"),
+                legend.key = element_rect(fill = "black"),
+                legend.title = element_text(face = "bold", size = 12),
+                legend.justification = c("right"),
+                legend.position = "right",
+                axis.title.x = element_text(size = 15, vjust = -0.4), 
+                axis.title.y = element_text(size = 15, vjust = 0.4)) 
+      )
     }
     
     
