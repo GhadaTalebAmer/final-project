@@ -12,6 +12,15 @@ library(leaflet)
 library(RColorBrewer)
 library(leaflet.extras)
 library(DT)
+library(scales)
+library(knitr)
+library(formattable)
+library(janitor)
+library(readr)
+library(dplyr)
+library(devtools)
+library(dplyr)
+
 
   # Read in the .rds files from the Initial App folder in
   # the repository. 
@@ -26,6 +35,11 @@ americas_all_actors <- read_rds("americas_all_actors.rds")
 mideast_all_actors <- read_rds("mideast_all_actors.rds")
 full_name_both <- read_rds("full_name_both.rds")
 point <- format_format(big.mark = "," , scientific = FALSE)
+violence_palette <- 
+  colorFactor(palette = "Reds", 
+              levels = c("State-Based Conflict", 
+                         "Non-State Conflict",
+                         "One-Sided Violence"))
 
     
     ui <- fluidPage(theme = shinytheme("cyborg"),
@@ -258,7 +272,7 @@ point <- format_format(big.mark = "," , scientific = FALSE)
                 legend.text = element_text(size = 12, colour = "white"),
                 plot.background = element_rect(fill = "black", colour = "black"),
                 panel.background = element_rect(fill = "black"),
-                strip.text = element_text(size = 14),
+                strip.text = element_text(size = 14, face = "bold"),
                 panel.grid = element_line(colour = "gray"),
                 legend.key = element_rect(fill = "black"),
                 legend.title = element_text(face = "bold", size = 12, colour = "white"),
