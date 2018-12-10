@@ -1,9 +1,9 @@
 # Uppsala Armed Conflict Data
 
 
-<b> About the The Uppsala Conflict Data Program  <b>
+<b> About the The Uppsala Conflict Data Program  
 
-The data used in this project has been collected by the Uppsala Conflict Data Program (UCDP) of the Department of Peace and Conflict Research of Uppsala University in Sweden and the International Peace Research Institute (PRIO) in Oslo. Established in 1946, the UCDP is an extensive public data collection project focused on global armed conflict. The project collects qualitative and quantitative data (e.g. violence type, conflict description, actors involved, geo-references, etc..) on different types of conflcits involving organized actors with armed force. UCDP defines organized actors as governments of independent states, formally organized groups or informally organized groups. Armed force refers to the use of any material means to promote the actor’s position in the conflict which results in deaths. The data program is directed by Associate Professor Kristine Eck of Uppsala University and a team of approximately 15 researchers. The project has grown to become one of the main providers of data on global organized violence and armed conflict. 
+<p> The data used in this project has been collected by the Uppsala Conflict Data Program (UCDP) of the Department of Peace and Conflict Research of Uppsala University in Sweden and the International Peace Research Institute (PRIO) in Oslo. Established in 1946, the UCDP is an extensive public data collection project focused on global armed conflict. The project collects qualitative and quantitative data (e.g. violence type, conflict description, actors involved, geo-references, etc..) on different types of conflcits involving organized actors with armed force. UCDP defines organized actors as governments of independent states, formally organized groups or informally organized groups. Armed force refers to the use of any material means to promote the actor’s position in the conflict which results in deaths. The data program is directed by Associate Professor Kristine Eck of Uppsala University and a team of approximately 15 researchers. The project has grown to become one of the main providers of data on global organized violence and armed conflict. 
 
 
 <b> Overview of Armed Conflict <b>
