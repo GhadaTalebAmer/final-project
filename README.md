@@ -20,9 +20,7 @@ data post-Cold War up to 2017. These visualizations represent trends over time a
 * The Data folder contains the raw datasets (in csv format) and the RDS files used to create the app. 
 * The PDF file named "codebook" is the codebook referring to the UCDP Georeferenced Event Dataset. 
 * The Initial App folder contains the Shiny Web App document and supporting RDS files required to build the app. 
-
-
-
+* The Exploratory Dashboard RMD file is an HTML document containing the code to clean the data, process it and create some of the visualizations for the app. 
 
 
 ### **Key Links**
