@@ -57,10 +57,11 @@ point <- format_format(big.mark = "," , scientific = FALSE)
           title = "Interactive Map",
           sidebarPanel(width = 3,
                          h5("Overview"),
-                         p("The data used in this dashboard has been collected by the
-                            The Uppsala Conflict Data Program (UCDP) Department of
-                            Peace and Conflict Research and the International 
-                            Peace Research Institute (PRIO) in Oslo."),
+                         p("The data used in this dashboard has been collected by",
+                           tags$a("The Uppsala Conflict Data Program", 
+                                  href = "http://ucdp.uu.se/downloads/#__utma=1.1522833974.1543790639.1544416707.1544554531.11&__utmb=1.2.10.1544554531&__utmc=1&__utmx=-&__utmz=1.1544554531.11.7.utmcsr=google%7Cutmccn=(organic)%7Cutmcmd=organic%7Cutmctr=(not%20provided)&__utmv=-&__utmk=29957183"),
+                           "(UCDP) of Uppsala University's Department of Peace and Conflict Research,
+                           in addition to the International Peace Research Institute (PRIO) in Oslo."),
                         br(),
                         p("Through this project, I was interested in exploring regional and 
                           global trends in armed conflict following the Cold War era. The dataset 
