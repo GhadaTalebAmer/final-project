@@ -25,7 +25,7 @@ library(dplyr)
   # Read in the .rds files from the Initial App folder in
   # the repository. 
 
-map <- read_rds("map_output.rds")
+
 plot <- read_rds("plot_deaths_time.rds")
 regional_calculations <- read_rds("regional_calculations.rds")
 africa_all_actors <- read_rds("africa_all_actors.rds")
@@ -35,11 +35,6 @@ americas_all_actors <- read_rds("americas_all_actors.rds")
 mideast_all_actors <- read_rds("mideast_all_actors.rds")
 full_name_both <- read_rds("full_name_both.rds")
 point <- format_format(big.mark = "," , scientific = FALSE)
-violence_palette <- 
-  colorFactor(palette = "Reds", 
-              levels = c("State-Based Conflict", 
-                         "Non-State Conflict",
-                         "One-Sided Violence"))
 
     
     ui <- fluidPage(theme = shinytheme("cyborg"),
@@ -78,7 +73,7 @@ violence_palette <-
                           of casualties involved."),
                         br(),
                         img(src = "https://cdn.freebiesupply.com/logos/large/2x/uppsala-universitet-logo-black-and-white.png", 
-                            width = "200px",
+                            width = "230px",
                            height = "230px")),
           
           
@@ -89,7 +84,7 @@ violence_palette <-
           
           mainPanel(
             h4("World Map of Armed Conflict Events from 1989 to 2017"),
-            leafletOutput(outputId = "leaflet_map", width = 890, height = 600)
+            leafletOutput(outputId = "leaflet_map", width = 1000, height = 800)
                   )
                 ),
             
@@ -288,7 +283,157 @@ violence_palette <-
       
       output$leaflet_map <- renderLeaflet({
         
-        map
+        # In this code chunk, I created some objects that I 
+        # will need in my leaflet map. I split up my data into
+        # groups of violence types that will later be integrated
+        # into my map to allow the user to toggle between different
+        # violence categories. I created the map directly in this file
+        # instead of reading in an r object because I was having errors
+        # in launching the app with a read in map. 
+        
+        clean_data_2 <-
+          full_name_both %>% 
+          unite("full_conflict_name", c("name_full_a","name_full_b"), sep = " vs. ")
+        
+        map_data <-
+          clean_data_2 %>% 
+          distinct(id, .keep_all = TRUE)
+        
+        one_sided_con <-
+          map_data %>% 
+          filter(type_of_violence == "One-Sided Violence")
+        
+        non_state_con <-
+          map_data %>% 
+          filter(type_of_violence == "Non-State Conflict")
+        
+        state_con <-
+          map_data %>% 
+          filter(type_of_violence == "State-Based Conflict")
+        
+        # I also created a colour palette for the type of 
+        # conflict groups that will later be integrated into my map
+        # to colour markers by type. I chose reds as my chosen 
+        # palette to also increase contrast with black map. 
+        
+        violence_palette <- 
+          colorFactor(palette = "Reds", 
+                      levels = c("State-Based Conflict", 
+                                 "Non-State Conflict",
+                                 "One-Sided Violence"))
+        
+        # In this code chunk, I created a leaflet map. I found
+        # a geo-referenced dataset that contained longitude and
+        # latitude information which I could use to plot markers.
+        # I added circle markers in three layers for each group.
+        # I also added base map in three layers to allow the user
+        # to toggle between different map types for 
+        # visualization purposes. I chose a black and white map to
+        # be the default map for contrast with the coloured markers.
+        
+        map <-
+        leaflet(options = leafletOptions(minZoom = 2)) %>% 
+          addProviderTiles("CartoDB.DarkMatter", 
+                           group = "Black and White Political Boundaries Map") %>% 
+          setMaxBounds(lng1 = 180 ,
+                       lat1 = 90, 
+                       lng2 = -180, 
+                       lat2 = -90) %>% 
+          
+          # I added circle markers in layers so that the user can 
+          # choose which conflict types to display. Each conflict
+          # group is represented by a different shade of red.
+          
+          addCircleMarkers(lng = one_sided_con$longitude, 
+                           lat = one_sided_con$latitude,
+                           group = "One-Sided Conflict",
+                           color = violence_palette(map_data$type_of_violence),
+                           radius = 5, 
+                           popup = paste0("The actors involved in the conflict are: ",
+                                          one_sided_con$full_conflict_name, "."," ",
+                                          "The conflict started in ", one_sided_con$year, ".", " ",
+                                          "It consisted of ",  one_sided_con$type_of_violence, "."," ",
+                                          "Total number of deaths: ", one_sided_con$total_deaths," ", "."),
+                           label = paste0(one_sided_con$full_conflict_name, " in ", one_sided_con$location),
+                           clusterOptions = markerClusterOptions(),
+                           labelOptions = labelOptions(noHide = F, 
+                                                       textsize = "10px", 
+                                                       direction = "bottom")) %>% 
+          
+          # Added both labels and popups to provide more info. I chose to 
+          # only display labels on hover so as to not clutter the map. I also 
+          # chose to display popups on click and not automatically to make
+          # the map clearer to read. I chose to cluster the markers for added
+          # readibility and to show zones which zones witnessed greater conflict.
+          
+          addCircleMarkers(lng = non_state_con$longitude, 
+                           lat = non_state_con$latitude,
+                           group = "Non-State Conflict",
+                           color = violence_palette(non_state_con$type_of_violence),
+                           radius = 5, 
+                           popup = paste0("The actors involved in the conflict are: ",
+                                          non_state_con$full_conflict_name, "."," ",
+                                          "The conflict started in ", non_state_con$year, ".", " ",
+                                          "It consisted of ",  non_state_con$type_of_violence, "."," ",
+                                          "Total number of deaths: ", non_state_con$total_deaths," ", "."),
+                           popupOptions = popupOptions(direction = "auto"),
+                           label = paste0(non_state_con$full_conflict_name, " in ", non_state_con$location),
+                           clusterOptions = markerClusterOptions(),
+                           labelOptions = labelOptions(noHide = F, 
+                                                       textsize = "10px", 
+                                                       direction = "auto",
+                                                       opacity = 0.75,
+                                                       interactive = TRUE )) %>% 
+          addCircleMarkers(lng = state_con$longitude,
+                           lat = state_con$latitude,
+                           group = "State-Based Conflict",
+                           color = violence_palette(state_con$type_of_violence),
+                           radius = 5, 
+                           popup = paste0("The actors involved in the conflict are: ",
+                                          state_con$full_conflict_name, "."," ",
+                                          "The conflict event occured in ", state_con$year, ".", " ",
+                                          "It consisted of ",  state_con$type_of_violence, "."," ",
+                                          "Total number of deaths: ", state_con$total_deaths," ", "."),
+                           label = paste0(state_con$full_conflict_name, " in ", state_con$location),
+                           clusterOptions = markerClusterOptions(),
+                           labelOptions = labelOptions(noHide = F, 
+                                                       textsize = "10px", 
+                                                       direction = "bottom")) %>% 
+          addLegend(pal = violence_palette,
+                    values = c("State-Based Conflict",
+                               "Non-State conflict",
+                               "One-Sided Violence" ),
+                    opacity = 0.7,
+                    title = "Type of Violence",
+                    position = "bottomright") %>% 
+          addSearchFeatures(targetGroups = 
+                              c('One-Sided Violence', 
+                                'Non-State Conflict', 
+                                'State-Based Conflict')) %>% 
+          addSearchOSM() %>%  
+          addResetMapButton()
+        
+        # Chose to also include different base maps to 
+        # give the user the option to choose which type of map
+        # is best for their individual purposes (e.g. political that
+        # displays state boundaries vs. physical that displays
+        # geographic features). 
+        
+       
+          map %>% 
+          addProviderTiles("Wikimedia", 
+                           group = "Coloured Political Boundaries Map") %>% 
+          addProviderTiles("Esri.WorldImagery",
+                           group = "Coloured Physical Map") %>% 
+          addProviderTiles("CartoDB.DarkMatter", 
+                           group = "Black and White Political Boundaries Map") %>% 
+          addLayersControl(baseGroups = c("Black and White Political Boundaries Map", 
+                                          "Coloured Political Boundaries Map",
+                                          "Coloured Physical Map"),
+                           overlayGroups = 
+                             c("One-Sided Violence", 
+                               "Non-State Conflict", 
+                               "State-Based Conflict")) 
         
       })
       
