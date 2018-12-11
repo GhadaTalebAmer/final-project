@@ -93,12 +93,12 @@ point <- format_format(big.mark = "," , scientific = FALSE)
           sidebarPanel(width = 2,
                        h5("Overview"),
                        p("Between 1989 and 2017, approximately 143,000 distinct conflict events
-                          occured across the world (excluding Syria). In all these events,
+                          occurred across the world (excluding Syria). In all these events,
                           the cumulative death toll of all fatalities was 2,022,229 with the most 
                           deaths concentrated in continental Africa. The most fatalities in all 
                           regions (excluding Africa) have been a result of state-based conflict,
                           in which the governments of at least two states are involved in organized 
-                          armed violence. By considering the distribution of casualities in each 
+                          armed violence. By considering the distribution of casualties in each 
                           region over time, key trends and changes can be seen.")),
           mainPanel(width = 10,
             plotOutput(outputId = "lineplot", width = 950, height = 600),
@@ -121,11 +121,12 @@ point <- format_format(big.mark = "," , scientific = FALSE)
           title = "Africa",
           sidebarPanel(width = 2,
                        h5("Overview"),
-                       p("The label markers of individual armed conflict events in the 
-                         interactive map contain abbreviated non-state actor names. For 
-                         example, CPI refers to the Communist Party of India. To get a 
-                         better understanding of who was involved in the conflict,
-                         use the list to search for the full name of the actor.")),
+                       p("Continental Africa witnessed the highest number of deaths between 1989 and 2017.
+                          The majority of deaths have been a result of one-sided violence. A key peak
+                          in one-sided violence occured in 1994 as a result of the Rwandan Genocide. 
+                          The best estimate of deaths in the Rwandan Genocide is approximately 500,000.
+                          Post-2000, continental Africa has witnessed low rates of state-based conflict, 
+                          non-state conflict and one-sided violence.")),
           mainPanel( 
             br(),
             plotOutput(outputId = "africa_deaths_country", width = 975),
@@ -142,7 +143,7 @@ point <- format_format(big.mark = "," , scientific = FALSE)
             sidebarPanel(width = 2,
                          h5("Overview"),
                          p("The majority of armed conflict events and subsequent deaths in this 
-                           region occured in Central  and South America. Notable civil wars stand 
+                           region occured in Central and South America. Notable civil wars stand 
                            out such as that of Guatemala and El Salvador. An increase in regional gang
                            violence and armed revolutionary groups contributed to increased rates
                            of non-state violence.")), 
@@ -201,7 +202,7 @@ point <- format_format(big.mark = "," , scientific = FALSE)
                        h5("Overview"),
                        p("The European continent has witnessed the lowest number of armed conflicts 
                           between 1989 and 2017 relative to the rest of the world. However, trends 
-                          in European casualities over time appear more sudden and changing than those 
+                          in European casualties over time appear more sudden and changing than those 
                           of other regions. Contemporary events of armed violence in Europe stand out, 
                           such as the Insurgency in the North Caucasus and the ongoing conflict between 
                           Russia and Ukraine.")),
