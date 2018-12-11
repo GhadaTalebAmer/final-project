@@ -84,7 +84,7 @@ point <- format_format(big.mark = "," , scientific = FALSE)
           
           mainPanel(
             h4("World Map of Armed Conflict Events from 1989 to 2017"),
-            leafletOutput(outputId = "leaflet_map", width = 1000, height = 800)
+            leafletOutput(outputId = "leaflet_map", width = 1010, height = 650)
                   )
                 ),
             
@@ -346,8 +346,8 @@ point <- format_format(big.mark = "," , scientific = FALSE)
           
           addCircleMarkers(lng = one_sided_con$longitude, 
                            lat = one_sided_con$latitude,
-                           group = "One-Sided Conflict",
-                           color = violence_palette(map_data$type_of_violence),
+                           group = "One-Sided Violence",
+                           color = violence_palette(one_sided_con$type_of_violence),
                            radius = 5, 
                            popup = paste0("The actors involved in the conflict are: ",
                                           one_sided_con$full_conflict_name, "."," ",
